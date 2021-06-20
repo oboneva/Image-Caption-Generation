@@ -2,7 +2,7 @@ from collate import CollateCaptions
 from torch.utils.data.dataloader import DataLoader
 from dataset import Flickr8k
 import torch
-from configs import data_config, model_config
+from configs import data_config, model_config, train_config
 from moduls.model import EncoderDecoder
 from trainer import Trainer
 from torchvision import transforms
@@ -13,7 +13,7 @@ def main():
     print("Using {} device".format(device))
 
     # 1. Prepare the Data.
-    vocab = torch.load('./Data/vocab.pth')
+    vocab = torch.load('{}/vocab.pth'.format(data_config.data_dir))
     vocab_size = len(vocab.itos)
 
     images_transform = transforms.Compose([
@@ -35,10 +35,10 @@ def main():
     train_dl = DataLoader(train, batch_size=data_config.train_batch_size,
                           shuffle=True, collate_fn=CollateCaptions(batch_first=True, padding_value=0))
 
-    test_dl = DataLoader(test, batch_size=data_config.train_batch_size,
+    test_dl = DataLoader(test, batch_size=data_config.test_batch_size,
                          shuffle=True, collate_fn=CollateCaptions(batch_first=True, padding_value=0))
 
-    val_dl = DataLoader(val, batch_size=data_config.train_batch_size,
+    val_dl = DataLoader(val, batch_size=data_config.val_batch_size,
                         shuffle=True, collate_fn=CollateCaptions(batch_first=True, padding_value=0))
 
     # 2. Define the Model.
@@ -46,7 +46,7 @@ def main():
                            vocab_size=vocab_size, device=device)
 
     # 3. Train the Model.
-    trainer = Trainer(train_dl)
+    trainer = Trainer(train_dl, train_config)
     trainer.train(model, vocab_size, device)
 
     # 4. Evaluate the Model.
