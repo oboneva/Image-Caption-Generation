@@ -1,5 +1,4 @@
 class data_config:
-    vocab_size = 10000
     train_batch_size = 8
 
 

@@ -1,6 +1,5 @@
 from collate import CollateCaptions
 from torch.utils.data.dataloader import DataLoader
-from torchvision.transforms.transforms import Compose
 from dataset import Flickr8k
 import torch
 from configs import data_config, model_config
@@ -14,8 +13,11 @@ def main():
     print("Using {} device".format(device))
 
     # 1. Prepare the Data.
+    vocab = torch.load('./Data/vocab.pth')
+    vocab_size = len(vocab.itos)
+
     train = Flickr8k(path="./Data/captions.txt",
-                     vocab_size=data_config.vocab_size,
+                     vocab=vocab,
                      images_root_dir="./Data/Images/",
                      transform=transforms.Compose([
                          transforms.CenterCrop(224),
@@ -29,11 +31,11 @@ def main():
 
     # 2. Define the Model.
     model = EncoderDecoder(model_config=model_config,
-                           data_config=data_config, device=device)
+                           vocab_size=vocab_size, device=device)
 
     # 3. Train the Model.
     trainer = Trainer(train_dl)
-    trainer.train(model, device)
+    trainer.train(model, vocab_size, device)
 
     # 4. Evaluate the Model.
     # TODO

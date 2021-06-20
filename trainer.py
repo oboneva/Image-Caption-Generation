@@ -1,4 +1,3 @@
-from configs import data_config
 from torch import nn
 from torch.utils.data import DataLoader
 from torch.nn import Module
@@ -9,7 +8,7 @@ class Trainer:
     def __init__(self, train_dataloader: DataLoader):
         self.train_dl = train_dataloader
 
-    def train(self, model: Module, device):
+    def train(self, model: Module, vocab_size: int, device):
         loss_func = nn.CrossEntropyLoss(
             ignore_index=1)  # index of <pad>
         optimizer = Adam(model.parameters())
@@ -28,7 +27,7 @@ class Trainer:
                 # target_captions = torch.zeros(output.size()).to(device)
                 # for i in range(output.size(0)):
                 #     target_captions.index_fill_(i, captions, 1)
-                asd1 = output.view(-1, data_config.vocab_size)
+                asd1 = output.view(-1, vocab_size)
                 asd2 = captions.reshape(-1)
                 # loss = criterion(outputs.view(-1, vocab_size), targets.reshape(-1))
                 loss = loss_func(asd1, asd2)

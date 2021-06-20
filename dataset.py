@@ -9,7 +9,7 @@ from PIL import Image
 
 
 class Flickr8k(Dataset):
-    def __init__(self, path: str, vocab_size: int, images_root_dir: str, transform=None):
+    def __init__(self, path: str, vocab: Vocab, images_root_dir: str, transform=None):
         df = pd.read_csv(path, sep=',')
 
         self.images_root_dir = images_root_dir
@@ -17,14 +17,8 @@ class Flickr8k(Dataset):
         self.captions = df["caption"]
         self.images = df["image"]
 
-        counter = Counter()
         self.tokenizer = get_tokenizer("basic_english")
-
-        for caption in self.captions:
-            counter.update(self.tokenizer(caption))
-
-        self.vocab = Vocab(counter, max_size=vocab_size, specials=[
-                           '<pad>', '<unk>', '<eos>', '<sos>'])
+        self.vocab = vocab
 
     def __len__(self):
         return len(self.captions)

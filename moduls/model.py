@@ -5,13 +5,13 @@ import configs
 
 
 class EncoderDecoder(nn.Module):
-    def __init__(self, model_config: configs.model_config, data_config: configs.data_config, device):
+    def __init__(self, model_config: configs.model_config, vocab_size: int, device):
         super(EncoderDecoder, self).__init__()
 
         self.encoder = EncoderCNN(
             embed_size=model_config.embed_size)
 
-        self.decoder = DecoderRNN(vocab_len=data_config.vocab_size,
+        self.decoder = DecoderRNN(vocab_len=vocab_size,
                                   hidden_size=model_config.hidden_size,
                                   embed_size=model_config.embed_size,
                                   device=device)
