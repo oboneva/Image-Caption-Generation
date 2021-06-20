@@ -16,18 +16,30 @@ def main():
     vocab = torch.load('./Data/vocab.pth')
     vocab_size = len(vocab.itos)
 
-    train = Flickr8k(path="./Data/captions.txt",
-                     vocab=vocab,
-                     images_root_dir="./Data/Images/",
-                     transform=transforms.Compose([
-                         transforms.CenterCrop(224),
-                         transforms.ToTensor(),
-                         transforms.Normalize(
-                             (0.485, 0.456, 0.406), (0.229, 0.224, 0.225)),
-                     ]))
+    images_transform = transforms.Compose([
+        transforms.CenterCrop(224),
+        transforms.ToTensor(),
+        transforms.Normalize(
+            (0.485, 0.456, 0.406), (0.229, 0.224, 0.225)),
+    ])
+
+    train = Flickr8k(path="{}/train_captions.txt".format(data_config.data_dir), vocab=vocab,
+                     images_root_dir="{}/Images/".format(data_config.data_dir), transform=images_transform)
+
+    test = Flickr8k(path="{}/test_captions.txt".format(data_config.data_dir), vocab=vocab,
+                    images_root_dir="{}/Images/".format(data_config.data_dir), transform=images_transform)
+
+    val = Flickr8k(path="{}/validate_captions.txt".format(data_config.data_dir), vocab=vocab,
+                   images_root_dir="{}/Images/".format(data_config.data_dir), transform=images_transform)
 
     train_dl = DataLoader(train, batch_size=data_config.train_batch_size,
                           shuffle=True, collate_fn=CollateCaptions(batch_first=True, padding_value=0))
+
+    test_dl = DataLoader(test, batch_size=data_config.train_batch_size,
+                         shuffle=True, collate_fn=CollateCaptions(batch_first=True, padding_value=0))
+
+    val_dl = DataLoader(val, batch_size=data_config.train_batch_size,
+                        shuffle=True, collate_fn=CollateCaptions(batch_first=True, padding_value=0))
 
     # 2. Define the Model.
     model = EncoderDecoder(model_config=model_config,

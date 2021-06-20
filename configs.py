@@ -1,4 +1,5 @@
 class data_config:
+    data_dir = "./Data"
     train_batch_size = 8
 
 
