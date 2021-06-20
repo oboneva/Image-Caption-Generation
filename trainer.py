@@ -12,7 +12,7 @@ class Trainer:
 
     def train(self, model: Module, vocab_size: int, device):
         loss_func = nn.CrossEntropyLoss(
-            ignore_index=1)  # index of <pad>
+            ignore_index=0)  # index of <pad>
         optimizer = Adam(model.parameters())
 
         for epoch in range(self.epochs):
@@ -26,12 +26,11 @@ class Trainer:
 
                 output = model(images, captions, captions_len)
 
-                # target_captions = torch.zeros(output.size()).to(device)
-                # for i in range(output.size(0)):
-                #     target_captions.index_fill_(i, captions, 1)
+                # remove <sos>
+                captions = captions[:, 1:]
+
                 asd1 = output.view(-1, vocab_size)
                 asd2 = captions.reshape(-1)
-                # loss = criterion(outputs.view(-1, vocab_size), targets.reshape(-1))
                 loss = loss_func(asd1, asd2)
 
                 loss.backward()
@@ -41,10 +40,6 @@ class Trainer:
 
 
 def main():
-    # captions = [[], [], []]
-    # target_captions = torch.zeros([3, 5, 8])
-    # for i in range(3):
-    #     target_captions.index_fill_(i, captions, 1)
     pass
 
 

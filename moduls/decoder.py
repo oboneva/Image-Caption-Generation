@@ -41,19 +41,20 @@ class DecoderRNN(nn.Module):
     def forward(self, image_features, captions, captions_len):
         batch_size, seq_len = captions.size()
 
-        # init hidden and cell states with the image features
-        hidden_state, cell_state = self.__init_hidden_cell_states(
-            image_features)
-
-        # output container
-        # ex: [8, 16, 10 000]
-        outputs_container = torch.empty(
-            (batch_size, seq_len, self.vocab_size)).to(self.device)
-
         # sort captions by sequence length in descending order
         captions_len, perm_idx = captions_len.sort(0, descending=True)
         captions = captions[perm_idx]
         image_features = image_features[perm_idx]
+
+        # init hidden and cell states with the image features
+        hidden_state, cell_state = self.__init_hidden_cell_states(
+            image_features)
+
+        # remove <eos>
+        for i in range(batch_size):
+            captions[i][captions_len[i] - 1] = 0
+        captions = captions[:, :-1]
+        captions_len -= 1
 
         # embed captions from [batch_size, seq_len] to [batch_size, seq_len, embedding_dim]
         # ex: [8, 16] -> [8, 16, 500]
@@ -69,8 +70,10 @@ class DecoderRNN(nn.Module):
         output_unpacked, output_lens_unpacked = pad_packed_sequence(
             output, batch_first=True)
 
-        # print(output, hidden_state_n, cell_state_n)
-        # print(output_unpacked, output_lens_unpacked)
+        # output container
+        # ex: [8, 16, 10 000]
+        outputs_container = torch.empty(
+            (batch_size, seq_len - 1, self.vocab_size)).to(self.device)
 
         for t in range(output_unpacked.size(1)):
             outputs_container[:, t, :] = self.fc(output_unpacked[:, t, :])
@@ -81,7 +84,6 @@ class DecoderRNN(nn.Module):
 
 
 def main():
-    # model = DecoderRNN()
     pass
 
 
