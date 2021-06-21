@@ -10,6 +10,8 @@ from timeit import default_timer as timer
 class Trainer:
     def __init__(self, train_dataloader: DataLoader, validate_dataloader: DataLoader, writer, configs: train_config):
         self.train_dl = train_dataloader
+        print("---------------- dataloader train batch size ",
+              self.train_dl.batch_size)
         self.val_dl = validate_dataloader
         self.epochs = configs.epochs
         self.writer = writer
