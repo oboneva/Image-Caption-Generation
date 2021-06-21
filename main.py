@@ -1,3 +1,4 @@
+from evaluator import Evaluator
 from collate import CollateCaptions
 from torch.utils.data.dataloader import DataLoader
 from dataset import Flickr8k
@@ -6,11 +7,14 @@ from configs import data_config, model_config, train_config
 from moduls.model import EncoderDecoder
 from trainer import Trainer
 from torchvision import transforms
+from torch.utils.tensorboard import SummaryWriter
 
 
 def main():
     device = "cuda" if torch.cuda.is_available() else "cpu"
     print("Using {} device".format(device))
+
+    writer = SummaryWriter(comment="model_metadata()")
 
     # 1. Prepare the Data.
     vocab = torch.load('{}/vocab.pth'.format(data_config.data_dir))
@@ -46,11 +50,11 @@ def main():
                            vocab_size=vocab_size, device=device)
 
     # 3. Train the Model.
-    trainer = Trainer(train_dl, train_config)
+    trainer = Trainer(train_dl, val_dl, writer, train_config)
     trainer.train(model, vocab_size, device)
 
     # 4. Evaluate the Model.
-    # TODO
+    Evaluator().eval(model, test_dl, True, writer, "Validate", device)
 
     # 5. Make Predictions.
     # TODO
