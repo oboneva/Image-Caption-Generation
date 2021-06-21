@@ -11,12 +11,14 @@ from moduls.model import EncoderDecoder
 from trainer import Trainer
 from torchvision import transforms
 from torch.utils.tensorboard import SummaryWriter
+import torch.backends.cudnn as cudnn
 
 
 def main():
     device = "cuda" if torch.cuda.is_available() else "cpu"
     print("Using {} device".format(device))
 
+    cudnn.benchmark = True
     writer = SummaryWriter(comment="model_metadata()")
 
     # 1. Prepare the Data.

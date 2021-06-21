@@ -71,7 +71,7 @@ class Trainer:
 
                 print("{0:.2f}".format(timer() - begin))
                 if step % 10 == 0:
-                  print("--------------- Step {} --------------- ".format(step))
+                    print("--------------- Step {} --------------- ".format(step))
 
             train_loss /= step
             self.writer.add_scalar("MLoss/train", train_loss, epoch)
