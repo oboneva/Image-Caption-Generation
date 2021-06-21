@@ -1,3 +1,6 @@
+from os import write
+import sys
+from commandline import parse_args
 from evaluator import Evaluator
 from collate import CollateCaptions
 from torch.utils.data.dataloader import DataLoader
@@ -56,9 +59,12 @@ def main():
     # 4. Evaluate the Model.
     Evaluator().eval(model, test_dl, True, writer, "Validate", device)
 
+    writer.close()
+
     # 5. Make Predictions.
     # TODO
 
 
 if __name__ == "__main__":
+    parse_args(sys.argv[1:])
     main()
