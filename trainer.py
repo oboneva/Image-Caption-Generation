@@ -4,6 +4,7 @@ from torch import nn
 from torch.utils.data import DataLoader
 from torch.nn import Module
 from torch.optim import Adam
+from timeit import default_timer as timer
 
 
 class Trainer:
@@ -47,6 +48,7 @@ class Trainer:
             train_loss = 0
 
             for step, (images, captions, captions_len) in enumerate(self.train_dl):
+                begin = timer()
                 optimizer.zero_grad()
 
                 images = images.to(device)
@@ -66,6 +68,10 @@ class Trainer:
                 optimizer.step()
 
                 train_loss += loss.item()
+
+                print("{0:.2f}".format(timer() - begin))
+                if step % 10 == 0:
+                  print("--------------- Step {} --------------- ".format(step))
 
             train_loss /= step
             self.writer.add_scalar("MLoss/train", train_loss, epoch)
