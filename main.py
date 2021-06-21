@@ -41,14 +41,25 @@ def main():
     val = Flickr8k(path="{}/validate_captions.txt".format(data_config.data_dir), vocab=vocab,
                    images_root_dir="{}/Images/".format(data_config.data_dir), transform=images_transform)
 
-    train_dl = DataLoader(train, batch_size=data_config.train_batch_size,
-                          shuffle=True, collate_fn=CollateCaptions(batch_first=True, padding_value=0))
+    train_dl = DataLoader(train,
+                          batch_size=data_config.train_batch_size,
+                          shuffle=True, collate_fn=CollateCaptions(
+                              batch_first=True, padding_value=0),
+                          num_workers=data_config.num_workers)
 
-    test_dl = DataLoader(test, batch_size=data_config.test_batch_size,
-                         shuffle=True, collate_fn=CollateCaptions(batch_first=True, padding_value=0))
+    test_dl = DataLoader(test,
+                         batch_size=data_config.test_batch_size,
+                         shuffle=True,
+                         collate_fn=CollateCaptions(
+                             batch_first=True, padding_value=0),
+                         num_workers=data_config.num_workers)
 
-    val_dl = DataLoader(val, batch_size=data_config.val_batch_size,
-                        shuffle=True, collate_fn=CollateCaptions(batch_first=True, padding_value=0))
+    val_dl = DataLoader(val,
+                        batch_size=data_config.val_batch_size,
+                        shuffle=True,
+                        collate_fn=CollateCaptions(
+                            batch_first=True, padding_value=0),
+                        num_workers=data_config.num_workers)
 
     # 2. Define the Model.
     model = EncoderDecoder(model_config=model_config,
