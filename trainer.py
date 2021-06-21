@@ -78,7 +78,8 @@ class Trainer:
             train_loss /= step
             self.writer.add_scalar("MLoss/train", train_loss, epoch)
 
-            val_loss = self.eval_loss(model, self.val_dl, device).item()
+            val_loss = self.eval_loss(
+                model, self.val_dl, vocab_size, device).item()
             self.writer.add_scalar("MLoss/validation", val_loss, epoch)
 
             print("MLoss/train", train_loss)
