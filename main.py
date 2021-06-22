@@ -45,21 +45,24 @@ def main():
                           batch_size=data_config.train_batch_size,
                           shuffle=True, collate_fn=CollateCaptions(
                               batch_first=True, padding_value=0),
-                          num_workers=data_config.num_workers)
+                          num_workers=data_config.num_workers,
+                          drop_last=True)
 
     test_dl = DataLoader(test,
                          batch_size=data_config.test_batch_size,
-                         shuffle=True,
+                         shuffle=False,
                          collate_fn=CollateCaptions(
                              batch_first=True, padding_value=0),
-                         num_workers=data_config.num_workers)
+                         num_workers=data_config.num_workers,
+                         drop_last=True)
 
     val_dl = DataLoader(val,
                         batch_size=data_config.val_batch_size,
-                        shuffle=True,
+                        shuffle=False,
                         collate_fn=CollateCaptions(
                             batch_first=True, padding_value=0),
-                        num_workers=data_config.num_workers)
+                        num_workers=data_config.num_workers,
+                        drop_last=True)
 
     # 2. Define the Model.
     model = EncoderDecoder(model_config=model_config,
