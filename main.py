@@ -73,7 +73,7 @@ def main():
     trainer.train(model, vocab_size, device)
 
     # 4. Evaluate the Model.
-    Evaluator().eval(model, test_dl, True, writer, "Validate", device)
+    Evaluator().eval(model, test_dl, True, writer, "Validate", device, vocab)
 
     writer.close()
 

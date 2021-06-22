@@ -7,7 +7,7 @@ from nltk.translate.meteor_score import meteor_score
 
 class Evaluator:
     @torch.no_grad()
-    def eval(self, model: Module, dl: DataLoader, verbose: bool, writer, writer_section: str, device):
+    def eval(self, model: Module, dl: DataLoader, verbose: bool, writer, writer_section: str, device, vocab):
         bleu1_weights = [1, 0, 0, 0]
         bleu2_weights = [0.5, 0.5, 0, 0]
         bleu3_weights = [0.33, 0.33, 0.33, 0]
@@ -32,12 +32,41 @@ class Evaluator:
 
             # remove <sos>
             captions = captions[:, 1:]
+            captions_len -= 1
 
-            bleu1 += bleu_score(output, captions, weights=bleu1_weights)
-            bleu2 += bleu_score(output, captions, weights=bleu2_weights)
-            bleu3 += bleu_score(output, captions, weights=bleu3_weights)
-            bleu4 += bleu_score(output, captions, weights=bleu4_weights)
-            meteor += meteor_score(captions, output)
+            best_output = output.argmax(dim=2)
+            for i in range(batch_size):
+                reference = [vocab.itos[num] for num in captions[i]]
+                reference = reference[:captions_len[i]]
+                reference_sentence = " ".join(reference)
+
+                predicted_same_len = [vocab.itos[num]
+                                      for num in best_output[i]]
+                predicted_same_len = predicted_same_len[:captions_len[i]]
+
+                predicted_diff_len = []
+                for num in best_output[i]:
+                    predicted_diff_len.append(vocab.itos[num])
+                    if vocab.itos[num] == "<eos>":
+                        break
+
+                predicted_sentence = " ".join(predicted_diff_len)
+
+                bleu1 += bleu_score(predicted_same_len, reference,
+                                    weights=bleu1_weights)
+                bleu2 += bleu_score(predicted_same_len, reference,
+                                    weights=bleu2_weights)
+                bleu3 += bleu_score(predicted_same_len, reference,
+                                    weights=bleu3_weights)
+                bleu4 += bleu_score(predicted_same_len, reference,
+                                    weights=bleu4_weights)
+                meteor += meteor_score(predicted_sentence, reference_sentence)
+
+            # bleu1 += bleu_score(output, captions, weights=bleu1_weights)
+            # bleu2 += bleu_score(output, captions, weights=bleu2_weights)
+            # bleu3 += bleu_score(output, captions, weights=bleu3_weights)
+            # bleu4 += bleu_score(output, captions, weights=bleu4_weights)
+            # meteor += meteor_score(captions, output)
 
             total_captions += batch_size
 
@@ -69,6 +98,17 @@ class Evaluator:
 
 
 def main():
+    # a = torch.tensor([[[1, 2, 2, 4],
+    #                    [1, 5, 2, 4],
+    #                    [1, 2, 6, 4],
+    #                    [7, 2, 2, 4]],
+    #                   [[1, 2, 2, 4],
+    #                    [1, 5, 2, 4],
+    #                    [1, 2, 6, 4],
+    #                    [7, 2, 2, 4]]])
+    # print(a.size())
+
+    # print(a.argmax(dim=2))
     pass
 
 
