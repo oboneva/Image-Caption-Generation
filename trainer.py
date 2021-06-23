@@ -10,11 +10,13 @@ from timeit import default_timer as timer
 class Trainer:
     def __init__(self, train_dataloader: DataLoader, validate_dataloader: DataLoader, writer, configs: train_config):
         self.train_dl = train_dataloader
-        print("---------------- dataloader train batch size ",
-              self.train_dl.batch_size)
         self.val_dl = validate_dataloader
         self.epochs = configs.epochs
         self.writer = writer
+
+        self.min_val_loss = 100
+        self.no_improvement_epochs = 0
+        self.patience = 10
 
     @torch.no_grad()
     def eval_loss(self, model: Module, dl: DataLoader, vocab_size: int, device):
@@ -78,6 +80,7 @@ class Trainer:
             train_loss /= step
             self.writer.add_scalar("MLoss/train", train_loss, epoch)
 
+            # eval on the validation set
             val_loss = self.eval_loss(
                 model, self.val_dl, vocab_size, device).item()
             self.writer.add_scalar("MLoss/validation", val_loss, epoch)
@@ -88,6 +91,22 @@ class Trainer:
             self.writer.flush()
 
             print("Loss", loss.item())
+
+            # early stopping
+            if val_loss < self.min_val_loss:
+                self.min_val_loss = val_loss
+                self.no_improvement_epochs = 0
+
+                print("New minimal validation loss", val_loss)
+
+                torch.save(model.state_dict(),
+                           "state_dict_model_epoch_{}.pt".format(epoch))
+            elif self.no_improvement_epochs == self.patience:
+                print("Early stoping on epoch {}".format(epoch))
+
+                break
+            else:
+                self.no_improvement_epochs += 1
 
 
 def main():
