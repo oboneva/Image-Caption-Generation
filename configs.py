@@ -12,4 +12,7 @@ class model_config:
 
 
 class train_config:
+    checkpoint_path = "./checkpoints"
+    continue_training = False
+    checkpoint_epochs = 5
     epochs = 100

@@ -1,17 +1,19 @@
-from os import write
 import sys
-from commandline import parse_args
-from evaluator import Evaluator
-from collate import CollateCaptions
-from torch.utils.data.dataloader import DataLoader
-from dataset import Flickr8k
 import torch
-from configs import data_config, model_config, train_config
-from moduls.model import EncoderDecoder
-from trainer import Trainer
+from torch.optim.adam import Adam
 from torchvision import transforms
 from torch.utils.tensorboard import SummaryWriter
 import torch.backends.cudnn as cudnn
+from torch.utils.data.dataloader import DataLoader
+
+from commandline import parse_args
+from evaluator import Evaluator
+from collate import CollateCaptions
+from dataset import Flickr8k
+from configs import data_config, model_config, train_config
+from moduls.model import EncoderDecoder
+from trainer import Trainer
+from modelutils import load_checkpoint
 
 
 def main():
@@ -70,7 +72,17 @@ def main():
 
     # 3. Train the Model.
     trainer = Trainer(train_dl, val_dl, writer, train_config)
-    trainer.train(model, vocab_size, device)
+    optimizer = Adam(model.parameters())
+    start_epoch = 0
+    min_val_loss = 1000
+    model.to(device)
+
+    if train_config.continue_training:
+        start_epoch, min_val_loss = load_checkpoint(
+            train_config.checkpoint_path, model, optimizer)
+
+    trainer.train(model, vocab_size, optimizer,
+                  start_epoch, min_val_loss, device)
 
     # 4. Evaluate the Model.
     Evaluator().eval(model, test_dl, True, writer, "Validate", device, vocab)

@@ -7,15 +7,15 @@ from configs import data_config, train_config
 def parse_args(argv):
     try:
         opts, args = getopt.getopt(
-            argv, "t:e:d:w:", ["trainbs=", "epochs=", "datadir=", "workers="])
+            argv, "t:e:d:w:p:c:s:", ["trainbs=", "epochs=", "datadir=", "workers=", "checkpointdir=", "continue=", "epochsave="])
     except getopt.GetoptError:
         print(
-            'main.py -t <train_batch_size> -e <epochs> -d <datadir> -w <workers>')
+            'main.py -t <train_batch_size> -e <epochs> -d <datadir> -w <workers> -p <checkpointdir> -c <continue> -s <epochsave>')
         sys.exit(2)
     for opt, arg in opts:
         if opt == '-h':
             print(
-                'main.py -t <train_batch_size> -e <epochs> -d <datadir> -w <workers>')
+                'main.py -t <train_batch_size> -e <epochs> -d <datadir> -w <workers> -p <checkpointdir> -c <continue> -s <epochsave>')
             sys.exit()
         elif opt in ("-t", "--trainbs"):
             data_config.train_batch_size = int(arg)
@@ -25,3 +25,9 @@ def parse_args(argv):
             data_config.data_dir = arg
         elif opt in ("-w", "--workers"):
             data_config.num_workers = int(arg)
+        elif opt in ("-p", "--checkpointdir"):
+            train_config.checkpoint_path = arg
+        elif opt in ("-c", "--continue"):
+            train_config.continue_training = True
+        elif opt in ("-s", "--epochsave"):
+            train_config.checkpoint_epochs = int(arg)

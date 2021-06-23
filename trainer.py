@@ -3,8 +3,8 @@ from configs import train_config
 from torch import nn
 from torch.utils.data import DataLoader
 from torch.nn import Module
-from torch.optim import Adam
 from timeit import default_timer as timer
+from modelutils import save_checkpoint
 
 
 class Trainer:
@@ -17,6 +17,8 @@ class Trainer:
         self.min_val_loss = 100
         self.no_improvement_epochs = 0
         self.patience = 10
+
+        self.checkpoint_epochs = configs.checkpoint_epochs
 
     @torch.no_grad()
     def eval_loss(self, model: Module, dl: DataLoader, vocab_size: int, device):
@@ -42,11 +44,11 @@ class Trainer:
 
         return loss
 
-    def train(self, model: Module, vocab_size: int, device):
+    def train(self, model: Module, vocab_size: int, optimizer, start_epoch, min_val_loss, device):
         loss_func = nn.CrossEntropyLoss(ignore_index=0)  # index of <pad>
-        optimizer = Adam(model.parameters())
+        self.min_val_loss = min_val_loss
 
-        for epoch in range(self.epochs):
+        for epoch in range(start_epoch + 1, self.epochs):
             print("--------------- Epoch {} --------------- ".format(epoch))
 
             train_loss = 0
@@ -74,23 +76,23 @@ class Trainer:
                 train_loss += loss.item()
 
                 print("{0:.2f}".format(timer() - begin))
+
                 if step % 10 == 0:
                     print("--------------- Step {} --------------- ".format(step))
 
             train_loss /= step
-            self.writer.add_scalar("MLoss/train", train_loss, epoch)
 
             # eval on the validation set
             val_loss = self.eval_loss(
                 model, self.val_dl, vocab_size, device).item()
-            self.writer.add_scalar("MLoss/validation", val_loss, epoch)
 
+            # log loss
             print("MLoss/train", train_loss)
             print("MLoss/validation", val_loss)
 
+            self.writer.add_scalar("MLoss/train", train_loss, epoch)
+            self.writer.add_scalar("MLoss/validation", val_loss, epoch)
             self.writer.flush()
-
-            print("Loss", loss.item())
 
             # early stopping
             if val_loss < self.min_val_loss:
@@ -99,14 +101,25 @@ class Trainer:
 
                 print("New minimal validation loss", val_loss)
 
-                torch.save(model.state_dict(),
-                           "state_dict_model_epoch_{}.pt".format(epoch))
+                path = "{}/model_best_state_dict.pt".format(
+                    train_config.checkpoint_path)
+
+                torch.save(model.state_dict(), path)
+
             elif self.no_improvement_epochs == self.patience:
                 print("Early stoping on epoch {}".format(epoch))
 
                 break
             else:
                 self.no_improvement_epochs += 1
+
+            # save checkpoint
+            if epoch % self.checkpoint_epochs == 0:
+                path = "{}/model_checkpoint.pt".format(
+                    train_config.checkpoint_path)
+
+                save_checkpoint(model=model, optimizer=optimizer,
+                                epoch=epoch, loss=self.min_val_loss, path=path)
 
 
 def main():
