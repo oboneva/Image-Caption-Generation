@@ -24,11 +24,14 @@ class Trainer:
     def eval_loss(self, model: Module, dl: DataLoader, vocab_size: int, device):
         loss_func = nn.CrossEntropyLoss(ignore_index=0)
         loss = 0
+        total_items = 0
 
         for step, (images, captions, captions_len) in enumerate(dl):
             images = images.to(device)
             captions = captions.to(device)
             captions_len = captions_len.to(device)
+
+            total_items += captions.size(0)
 
             output = model(images, captions, captions_len)
             # remove <sos>
@@ -40,7 +43,7 @@ class Trainer:
 
             loss += loss.item()
 
-        loss /= step
+        loss /= total_items
 
         return loss
 
@@ -52,6 +55,7 @@ class Trainer:
             print("--------------- Epoch {} --------------- ".format(epoch))
 
             train_loss = 0
+            total_items = 0
 
             for step, (images, captions, captions_len) in enumerate(self.train_dl):
                 begin = timer()
@@ -60,6 +64,8 @@ class Trainer:
                 images = images.to(device)
                 captions = captions.to(device)
                 captions_len = captions_len.to(device)
+
+                total_items += captions.size(0)
 
                 output = model(images, captions, captions_len)
 
@@ -80,7 +86,7 @@ class Trainer:
                 if step % 10 == 0:
                     print("--------------- Step {} --------------- ".format(step))
 
-            train_loss /= step
+            train_loss /= total_items
 
             # eval on the validation set
             val_loss = self.eval_loss(
@@ -115,6 +121,8 @@ class Trainer:
 
             # save checkpoint
             if epoch % self.checkpoint_epochs == 0:
+                print("Saving checkpoint at {} epoch".format(epoch))
+
                 path = "{}/model_checkpoint.pt".format(
                     train_config.checkpoint_path)
 

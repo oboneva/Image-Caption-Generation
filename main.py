@@ -73,7 +73,7 @@ def main():
     # 3. Train the Model.
     trainer = Trainer(train_dl, val_dl, writer, train_config)
     optimizer = Adam(model.parameters())
-    start_epoch = 0
+    last_epoch = -1
     min_val_loss = 1000
     model.to(device)
 
@@ -81,11 +81,14 @@ def main():
         path = "{}/model_checkpoint.pt".format(
             train_config.checkpoint_path)
 
-        start_epoch, min_val_loss = load_checkpoint(
+        last_epoch, min_val_loss = load_checkpoint(
             path, model, optimizer)
 
+        print("Loading last checkpoint with loss {} on epoch {}".format(
+            min_val_loss, last_epoch))
+
     trainer.train(model, vocab_size, optimizer,
-                  start_epoch, min_val_loss, device)
+                  last_epoch, min_val_loss, device)
 
     # 4. Evaluate the Model.
     Evaluator().eval(model, test_dl, True, writer, "Validate", device, vocab)
