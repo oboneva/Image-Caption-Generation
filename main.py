@@ -78,8 +78,11 @@ def main():
     model.to(device)
 
     if train_config.continue_training:
+        path = "{}/model_checkpoint.pt".format(
+            train_config.checkpoint_path)
+
         start_epoch, min_val_loss = load_checkpoint(
-            train_config.checkpoint_path, model, optimizer)
+            path, model, optimizer)
 
     trainer.train(model, vocab_size, optimizer,
                   start_epoch, min_val_loss, device)
