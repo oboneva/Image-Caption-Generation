@@ -20,7 +20,7 @@ class Evaluator:
         meteor = 0
         total_captions = 0
 
-        for i, (images, captions, captions_len) in enumerate(dl):
+        for step, (images, captions, captions_len) in enumerate(dl):
 
             images = images.to(device)
             captions = captions.to(device)
@@ -62,13 +62,11 @@ class Evaluator:
                                     weights=bleu4_weights)
                 meteor += meteor_score(predicted_sentence, reference_sentence)
 
-            # bleu1 += bleu_score(output, captions, weights=bleu1_weights)
-            # bleu2 += bleu_score(output, captions, weights=bleu2_weights)
-            # bleu3 += bleu_score(output, captions, weights=bleu3_weights)
-            # bleu4 += bleu_score(output, captions, weights=bleu4_weights)
-            # meteor += meteor_score(captions, output)
-
             total_captions += batch_size
+
+            if step % 5 == 0:
+                print("Reference: ", reference_sentence)
+                print("Generated: ", predicted_sentence)
 
         bleu1 /= total_captions
         bleu2 /= total_captions
@@ -98,17 +96,6 @@ class Evaluator:
 
 
 def main():
-    # a = torch.tensor([[[1, 2, 2, 4],
-    #                    [1, 5, 2, 4],
-    #                    [1, 2, 6, 4],
-    #                    [7, 2, 2, 4]],
-    #                   [[1, 2, 2, 4],
-    #                    [1, 5, 2, 4],
-    #                    [1, 2, 6, 4],
-    #                    [7, 2, 2, 4]]])
-    # print(a.size())
-
-    # print(a.argmax(dim=2))
     pass
 
 

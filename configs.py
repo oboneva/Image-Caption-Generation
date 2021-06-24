@@ -3,12 +3,12 @@ class data_config:
     train_batch_size = 256
     test_batch_size = 256
     val_batch_size = 256
-    num_workers = 4
+    num_workers = 6
 
 
 class model_config:
-    embed_size = 500
-    hidden_size = 50
+    embed_size = 512
+    hidden_size = 256
 
 
 class train_config:

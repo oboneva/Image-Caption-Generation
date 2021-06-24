@@ -1,3 +1,4 @@
+from evaluator import Evaluator
 import torch
 from configs import train_config
 from torch import nn
@@ -43,11 +44,14 @@ class Trainer:
 
             loss += loss.item()
 
+            if step % 50 == 0:
+                print("Loss/val at step {} {}".format(step, loss.item()))
+
         loss /= total_items
 
         return loss
 
-    def train(self, model: Module, vocab_size: int, optimizer, start_epoch, min_val_loss, device):
+    def train(self, model: Module, vocab, vocab_size: int, optimizer, start_epoch, min_val_loss, device):
         loss_func = nn.CrossEntropyLoss(ignore_index=0)  # index of <pad>
         self.min_val_loss = min_val_loss
 
@@ -86,6 +90,9 @@ class Trainer:
                 if step % 10 == 0:
                     print("--------------- Step {} --------------- ".format(step))
 
+                if step % 50 == 0:
+                    print("Loss/train at step {} {}".format(step, loss.item()))
+
             train_loss /= total_items
 
             # eval on the validation set
@@ -99,6 +106,8 @@ class Trainer:
             self.writer.add_scalar("MLoss/train", train_loss, epoch)
             self.writer.add_scalar("MLoss/validation", val_loss, epoch)
             self.writer.flush()
+
+            Evaluator().eval(model, self.val_dl, True, self.writer, "Val", device, vocab)
 
             # early stopping
             if val_loss < self.min_val_loss:

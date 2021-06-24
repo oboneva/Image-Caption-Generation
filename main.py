@@ -87,11 +87,11 @@ def main():
         print("Loading last checkpoint with loss {} on epoch {}".format(
             min_val_loss, last_epoch))
 
-    trainer.train(model, vocab_size, optimizer,
+    trainer.train(model, vocab, vocab_size, optimizer,
                   last_epoch, min_val_loss, device)
 
     # 4. Evaluate the Model.
-    Evaluator().eval(model, test_dl, True, writer, "Validate", device, vocab)
+    Evaluator().eval(model, test_dl, True, writer, "Test", device, vocab)
 
     writer.close()
 
