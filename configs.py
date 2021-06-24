@@ -12,6 +12,7 @@ class model_config:
 
 
 class train_config:
+    log_dir = "./runs"
     checkpoint_path = "./checkpoints"
     continue_training = False
     checkpoint_epochs = 5

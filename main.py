@@ -21,7 +21,7 @@ def main():
     print("Using {} device".format(device))
 
     cudnn.benchmark = True
-    writer = SummaryWriter(comment="model_metadata()")
+    writer = SummaryWriter(log_dir=train_config.log_dir)
 
     # 1. Prepare the Data.
     vocab = torch.load('{}/vocab.pth'.format(data_config.data_dir))
