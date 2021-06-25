@@ -35,14 +35,14 @@ class Evaluator:
             for i in range(images.size(0)):
                 image = images[i].unsqueeze(0)
                 caption = captions[i]
-                caption_len = captions_len[i]
+                caption_len = captions_len[i] - 1
 
                 features = model.encoder(image.to(device))
                 output = model.decoder.generate(features, vocab, 20)
                 predicted_sentence = ' '.join(output)
 
                 reference = [vocab.itos[num] for num in caption]
-                reference = reference[:caption_len]
+                reference = reference[1:caption_len]
                 reference_sentence = " ".join(reference)
 
                 predicted_same_len = output[:caption_len]
