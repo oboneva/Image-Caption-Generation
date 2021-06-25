@@ -47,6 +47,9 @@ class Evaluator:
 
                 predicted_same_len = output[:caption_len]
 
+                if len(output) < caption_len:
+                    reference = reference[: len(output)]
+
                 bleu1 += bleu_score(predicted_same_len, reference,
                                     weights=bleu1_weights)
                 bleu2 += bleu_score(predicted_same_len, reference,

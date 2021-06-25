@@ -3,7 +3,7 @@ class data_config:
     train_batch_size = 8
     test_batch_size = 256
     val_batch_size = 256
-    num_workers = 1
+    num_workers = 6
 
 
 class model_config:
