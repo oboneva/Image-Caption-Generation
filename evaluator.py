@@ -42,7 +42,7 @@ class Evaluator:
                 predicted_sentence = ' '.join(output)
 
                 reference = [vocab.itos[num] for num in caption]
-                reference = reference[1:caption_len]
+                reference = reference[1:caption_len + 1]
                 reference_sentence = " ".join(reference)
 
                 predicted_same_len = output[:caption_len]
