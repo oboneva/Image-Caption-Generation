@@ -32,7 +32,7 @@ class Evaluator:
 
             output = model(images, captions, captions_len)
 
-            for i in images.size(0):
+            for i in range(images.size(0)):
                 image = images[i]
                 caption = captions[i]
                 caption_len = captions_len[i]
