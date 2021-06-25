@@ -38,7 +38,7 @@ class Evaluator:
                 caption_len = captions_len[i]
 
                 features = model.encoder(image.to(device))
-                output = model.decoder.generate_caption(features, vocab, 20)
+                output = model.decoder.generate(features, vocab, 20)
                 predicted_sentence = ' '.join(output)
 
                 reference = [vocab.itos[num] for num in caption]

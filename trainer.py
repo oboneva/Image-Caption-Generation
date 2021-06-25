@@ -27,6 +27,7 @@ class Trainer:
         loss = 0
         total_items = 0
 
+        model.eval()
         for step, (images, captions, captions_len) in enumerate(dl):
             images = images.to(device)
             captions = captions.to(device)
@@ -55,6 +56,7 @@ class Trainer:
         loss_func = nn.CrossEntropyLoss(ignore_index=0)  # index of <pad>
         self.min_val_loss = min_val_loss
 
+        model.train()
         for epoch in range(start_epoch + 1, self.epochs):
             print("--------------- Epoch {} --------------- ".format(epoch))
 
@@ -112,7 +114,7 @@ class Trainer:
             dataiter = iter(self.val_dl)
             images, _, _ = next(dataiter)
             features = model.encoder(images[:1].to(device))
-            output = model.decoder.generate_caption(features, vocab, 20)
+            output = model.decoder.generate(features, vocab, 20)
             generated = ' '.join(output)
             print("Generated: ", generated)
             model.train()
