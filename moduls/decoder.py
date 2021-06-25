@@ -1,86 +1,106 @@
+from moduls.attention import Attention
 import torch
 from torch import nn
-from torch.nn.utils.rnn import pack_padded_sequence, pad_packed_sequence
 
 
 class DecoderRNN(nn.Module):
-    def __init__(self, vocab_len: int, hidden_size: int, embed_size: int, device):
+    def __init__(self, vocab_len: int, hidden_size: int, embed_size: int, attention_size: int, encoder_size: int, dropout_prob, device):
         super(DecoderRNN, self).__init__()
 
         self.vocab_size = vocab_len
+        self.attention_size = attention_size
+        self.encoder_size = encoder_size
         self.hidden_size = hidden_size
         self.embed_size = embed_size
         self.device = device
 
-        self.init_h = nn.Linear(embed_size, hidden_size)
-        self.init_c = nn.Linear(embed_size, hidden_size)
+        self.init_h = nn.Linear(encoder_size, hidden_size)
+        self.init_c = nn.Linear(encoder_size, hidden_size)
 
         self.embedding = nn.Embedding(
             num_embeddings=self.vocab_size, embedding_dim=self.embed_size)
 
-        # self.lstm = nn.LSTMCell(
-        #     input_size=self.embed_size, hidden_size=self.hidden_size)
+        self.attention = Attention(encoder_size, hidden_size, attention_size)
 
-        self.lstm = nn.LSTM(input_size=self.embed_size,
-                            hidden_size=self.hidden_size)
+        self.lstm = nn.LSTMCell(
+            input_size=self.embed_size + self.encoder_size, hidden_size=self.hidden_size, bias=True)
 
         self.fc = nn.Linear(in_features=self.hidden_size,
                             out_features=self.vocab_size)
 
         self.softmax = nn.Softmax(dim=1)
 
-    def __init_hidden_cell_states(self, image_features):
-        hidden_state = self.init_h(image_features)
-        hidden_state = torch.unsqueeze(hidden_state, 0)
+        self.drop = nn.Dropout(dropout_prob)
 
-        cell_state = self.init_c(image_features)
-        cell_state = torch.unsqueeze(cell_state, 0)
+    def __init_hidden_cell_states(self, image_features):
+        mean_image_features = image_features.mean(dim=1)
+
+        hidden_state = self.init_h(mean_image_features)
+        cell_state = self.init_c(mean_image_features)
 
         return (hidden_state, cell_state)
 
     def forward(self, image_features, captions, captions_len):
         batch_size, seq_len = captions.size()
-
-        # sort captions by sequence length in descending order
-        captions_len, perm_idx = captions_len.sort(0, descending=True)
-        captions = captions[perm_idx]
-        image_features = image_features[perm_idx]
-
-        # init hidden and cell states with the image features
-        hidden_state, cell_state = self.__init_hidden_cell_states(
-            image_features)
-
-        # remove <eos>
-        for i in range(batch_size):
-            captions[i][captions_len[i] - 1] = 0
-        captions = captions[:, :-1]
-        captions_len -= 1
+        seq_len -= 1
 
         # embed captions from [batch_size, seq_len] to [batch_size, seq_len, embedding_dim]
         # ex: [8, 16] -> [8, 16, 500]
         captions_embed = self.embedding(captions)
 
-        # pack the padded, sorted and embedded captions
-        packed_captions = pack_padded_sequence(
-            captions_embed, captions_len.cpu().numpy(), True)
-
-        output, (hidden_state_n, cell_state_n) = self.lstm(
-            packed_captions, (hidden_state, cell_state))
-
-        output_unpacked, output_lens_unpacked = pad_packed_sequence(
-            output, batch_first=True)
+        # init hidden and cell states with the image features
+        hidden_state, cell_state = self.__init_hidden_cell_states(
+            image_features)
 
         # output container
-        # ex: [8, 16, 10 000]
-        outputs_container = torch.empty(
-            (batch_size, seq_len - 1, self.vocab_size)).to(self.device)
+        # ex: [8, 16, 10 000
+        outputs_container = torch.zeros(batch_size, seq_len, self.vocab_size).to(
+            self.device)
 
-        for t in range(output_unpacked.size(1)):
-            outputs_container[:, t, :] = self.fc(output_unpacked[:, t, :])
-            outputs_container[:, t, :] = self.softmax(
-                outputs_container[:, t, :].clone())
+        for t in range(seq_len):
+            _, context = self.attention(image_features, hidden_state)
+            lstm_input = torch.cat((captions_embed[:, t], context), dim=1)
+
+            hidden_state_t, cell_state_t = self.lstm(
+                lstm_input, (hidden_state, cell_state))
+
+            output = self.fc(self.drop(hidden_state_t))
+
+            outputs_container[:, t] = output
 
         return outputs_container
+
+    def generate(self, image_features, vocab, max_len):
+        batch_size = image_features.size(0)
+
+        hidden_state, cell_state = self.__init_hidden_cell_states(
+            image_features)
+
+        captions = []
+
+        word = torch.tensor(vocab.stoi['<sos>']).view(1, -1).to(self.device)
+        embed = self.embedding(word)
+
+        for t in range(max_len):
+            _, context = self.attention(image_features, hidden_state)
+            lstm_input = torch.cat((embed[:, 0], context), dim=1)
+
+            hidden_state_t, cell_state_t = self.lstm(
+                lstm_input, (hidden_state, cell_state))
+
+            output = self.fc(self.drop(hidden_state_t))
+            output = output.view(batch_size, -1)
+
+            best_word_idx = output.argmax(dim=1)
+
+            captions.append(best_word_idx)
+
+            if vocab.itos[best_word_idx] == "<eos>":
+                break
+
+            embed = self.embedding(best_word_idx.unsqueeze(0))
+
+        return [vocab.itos[idx] for idx in captions]
 
 
 def main():

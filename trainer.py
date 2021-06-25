@@ -95,6 +95,8 @@ class Trainer:
 
             train_loss /= total_items
 
+            model.eval()
+
             # eval on the validation set
             val_loss = self.eval_loss(
                 model, self.val_dl, vocab_size, device).item()
@@ -107,7 +109,13 @@ class Trainer:
             self.writer.add_scalar("MLoss/validation", val_loss, epoch)
             self.writer.flush()
 
-            Evaluator().eval(model, self.val_dl, True, self.writer, "Val", device, vocab)
+            dataiter = iter(self.val_dl)
+            images, _, _ = next(dataiter)
+            features = model.encoder(images[:1].to(device))
+            output = model.decoder.generate_caption(features, vocab, 20)
+            generated = ' '.join(output)
+            print("Generated: ", generated)
+            model.train()
 
             # early stopping
             if val_loss < self.min_val_loss:
